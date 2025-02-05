@@ -9,11 +9,11 @@ class State(Enum):
     ROUND_ACTIVE = 3
 
 
-class PlayerChoice(Enum):
+class Choice(Enum):
+    NONE = 0
     ROCK = 1
     PAPER = 2
     SCISSOR = 3
-    MENU = 4
 
 
 class MyGame(arcade.Window):
@@ -21,17 +21,23 @@ class MyGame(arcade.Window):
         self.window_width = 800
         self.window_height = 600
         super().__init__(self.window_width, self.window_height, "Jeu de Game")
-        self.player_choice = None
+        self.player_choice = Choice.NONE
         self.bot_choice = None
         self.move_x = 0
         self.move_y = 0
-        self.move_left = False
-        self.move_right = False
-        self.move_up = False
-        self.move_down = False
+
+        self.game_state = None
 
         self.box_x = 100
         self.box_y = 150
+
+        self.cursor_position = 1
+
+        self.cursor_left = self.box_x - 30
+        self.cursor_right = self.box_x + 30
+        self.cursor_top = self.box_y + 30
+        self.cursor_bottom = self.box_y - 30
+        self.cursor_color = arcade.color.RED
 
     def on_draw(self):
         self.clear()
@@ -53,44 +59,65 @@ class MyGame(arcade.Window):
                                                     self.box_y + 30,
                                                     arcade.color.RED)
 
-        arcade.draw.draw_lrbt_rectangle_outline((self.box_x - 30) + 90,
-                                                (self.box_x + 30) + 90,
-                                                self.box_y - 30,
-                                                self.box_y + 30,
-                                                arcade.color.WHITE)
+        arcade.draw.draw_lrbt_rectangle_outline(self.cursor_left - 90,
+                                                self.cursor_right - 90,
+                                                self.cursor_bottom,
+                                                self.cursor_top,
+                                                self.cursor_color)
 
     def on_mouse_press(self, x, y, button, key_modifiers):
         pass
 
     def on_update(self, delta_time: float):
-        if self.move_left:
-            self.move_x = self.box_x - 30 + 90 * self.player_choice
+        self.cursor_left = (self.box_x - 30) + (90 * self.cursor_position)
+        self.cursor_right = (self.box_x + 30) + (90 * self.cursor_position)
+        print(f"{self.cursor_position}")
 
-        if self.move_right:
-            self.move_x = self.box_x - 30 + 90 * self.player_choice
+        if self.cursor_position == 1:
+            self.player_choice = Choice.ROCK
+            print(f"{self.player_choice}\n{self.cursor_position}")
+
+        elif self.cursor_position == 2:
+            self.player_choice = Choice.PAPER
+            print(f"{self.player_choice}\n{self.cursor_position}")
+
+        elif self.cursor_position == 3:
+            self.player_choice = Choice.SCISSOR
+            print(f"{self.player_choice}\n{self.cursor_position}")
+
+        if self.game_state == State.ROUND_ACTIVE:
+            self.cursor_color = arcade.color.WHITE
 
     def on_key_press(self, key, modifiers):
-        if key == arcade.key.LEFT:
-            self.move_left = not self.move_left
+        if key == arcade.key.SPACE:
+            self.game_state = State.ROUND_ACTIVE
+        if self.game_state == State.ROUND_ACTIVE:
+            if key == arcade.key.LEFT or key == arcade.key.A:
+                self.cursor_position -= 1
+                if self.cursor_position < 1:
+                    self.cursor_position = 1
 
-        elif key == arcade.key.RIGHT:
-            self.move_right = not self.move_right
+            elif key == arcade.key.RIGHT or key == arcade.key.D:
+                self.cursor_position += 1
+                if self.cursor_position > 3:
+                    self.cursor_position = 3
 
-        else:
-            pass
+            else:
+                pass
 
     def on_key_release(self, key: int, modifiers: int):
-        if key == arcade.key.LEFT:
-            self.move_left = not self.move_left
-
-        elif key == arcade.key.RIGHT:
-            self.move_right = not self.move_right
-
-        elif key == arcade.key.UP:
-            self.move_up = not self.move_up
-
-        elif key == arcade.key.DOWN:
-            self.move_down = not self.move_down
+        # if key == arcade.key.LEFT:
+        #     self.move_left = not self.move_left
+        #
+        # elif key == arcade.key.RIGHT:
+        #     self.move_right = not self.move_right
+        #
+        # elif key == arcade.key.UP:
+        #     self.move_up = not self.move_up
+        #
+        # elif key == arcade.key.DOWN:
+        #     self.move_down = not self.move_down
+        pass
 
 
 def main():
