@@ -1,18 +1,10 @@
 import arcade
 from enum import Enum
+import random
 
+from game_state import State
+from attack_animation import AttackType, AttackAnimation
 
-class State(Enum):
-    ROUND_DONE = 0
-    GAME_OVER = 1
-    NOT_STARTED = 2
-    ROUND_ACTIVE = 3
-
-
-class AttackType(Enum):
-    ROCK = 0
-    PAPER = 1
-    SCISSOR = 2
 
 
 class MyGame(arcade.Window):
@@ -24,6 +16,10 @@ class MyGame(arcade.Window):
         self.bot_choice = None
         self.move_x = 0
         self.move_y = 0
+
+        self.win = False
+        self.tie = False
+        self.lose = False
 
         self.game_state = State.NOT_STARTED
 
@@ -40,29 +36,55 @@ class MyGame(arcade.Window):
 
         self.image_list = arcade.SpriteList()
 
-        self.rock = arcade.Sprite("assets/srock.png")
+        self.rock = AttackAnimation(AttackType.ROCK)
         self.rock.center_x = 100
         self.rock.center_y = 150
-        self.rock.size = (100, 100)
 
-        self.paper = arcade.Sprite("assets/spaper.png")
+        self.paper = arcade.Sprite("assets/spaper.png", scale=0.7)
         self.paper.center_x = 230
         self.paper.center_y = 154
-        self.paper.size = (100, 100)
 
-        self.scissor = arcade.Sprite("assets/scissors.png")
+        self.scissor = arcade.Sprite("assets/scissors.png", scale=0.7)
         self.scissor.center_x = 340
         self.scissor.center_y = 154
-        self.scissor.size = (100, 100)
+
+        self.face = arcade.Sprite("assets/faceBeard.png", scale=0.3)
+        self.face.center_x = 225
+        self.face.center_y = 300
+
+        self.compy = arcade.Sprite("assets/compy.png", scale=1.5)
+        self.compy.center_x = 620
+        self.compy.center_y = 300
 
         self.image_list.append(self.rock)
         self.image_list.append(self.paper)
         self.image_list.append(self.scissor)
+        self.image_list.append(self.face)
+        self.image_list.append(self.compy)
+
+        self.computer_list = arcade.SpriteList()
+
+        self.computer_rock = arcade.Sprite("assets/srock.png", scale=0.7)
+        self.computer_rock.center_x = 620
+        self.computer_rock.center_y = 150
+
+        self.computer_paper = arcade.Sprite("assets/spaper.png", scale=0.7)
+        self.computer_paper.center_x = 620
+        self.computer_paper.center_y = 154
+
+        self.computer_scissor = arcade.Sprite("assets/scissors.png", scale=0.7)
+        self.computer_scissor.center_x = 620
+        self.computer_scissor.center_y = 154
+
+        self.computer_list.append(self.computer_rock)
+        self.computer_list.append(self.computer_paper)
+        self.computer_list.append(self.computer_scissor)
 
     def on_draw(self):
         self.clear()
         arcade.set_background_color(arcade.color.GRAY)
         self.image_list.draw()
+        self.computer_list.draw()
         arcade.draw_text("Roche, Papier, Ciseaux",
                          100,
                          self.window_height - 90,
@@ -87,6 +109,12 @@ class MyGame(arcade.Window):
                                                     self.box_y + 50,
                                                     arcade.color.RED)
 
+        arcade.draw.draw_lrbt_rectangle_outline(570,
+                                                670,
+                                                self.box_y - 50,
+                                                self.box_y + 50,
+                                                arcade.color.RED)
+
         arcade.draw.draw_lrbt_rectangle_outline(self.cursor_left - 120,
                                                 self.cursor_right - 120,
                                                 self.cursor_bottom,
@@ -96,16 +124,52 @@ class MyGame(arcade.Window):
     def on_mouse_press(self, x, y, button, key_modifiers):
         pass
 
+    def on_mouse_motion(self, x: int, y: int, dx: int, dy: int):
+        if 50 <= x <= 150 and 100 <= y <= 200:
+            self.cursor_position = 1
+        elif 170 <= x <= 270 and 100 <= y <= 200:
+            self.cursor_position = 2
+        elif 290 <= x <= 390 and 100 <= y <= 200:
+            self.cursor_position = 3
+
     def on_update(self, delta_time: float):
         self.cursor_left = (self.box_x - 50) + (120 * self.cursor_position)
         self.cursor_right = (self.box_x + 50) + (120 * self.cursor_position)
 
+        self.rock.on_update(delta_time)
+
         if self.game_state == State.ROUND_ACTIVE:
             self.cursor_color = arcade.color.WHITE
+            self.bot_choice = random.randint(1, 3)
+
+        if self.bot_choice == AttackType.ROCK:
+            if self.player_choice == AttackType.ROCK:
+                self.tie = True
+            elif self.player_choice == AttackType.PAPER:
+                self.win = True
+            elif self.player_choice == AttackType.SCISSOR:
+                self.lose = True
+
+        elif self.bot_choice == AttackType.PAPER:
+            if self.player_choice == AttackType.ROCK:
+                self.lose = True
+            elif self.player_choice == AttackType.PAPER:
+                self.tie = True
+            elif self.player_choice == AttackType.SCISSOR:
+                self.win = True
+
+        elif self.bot_choice == AttackType.SCISSOR:
+            if self.player_choice == AttackType.ROCK:
+                self.win = True
+            elif self.player_choice == AttackType.PAPER:
+                self.lose = True
+            elif self.player_choice == AttackType.SCISSOR:
+                self.tie = True
 
     def on_key_press(self, key, modifiers):
         if key == arcade.key.SPACE:
             self.game_state = State.ROUND_ACTIVE
+
         if self.game_state == State.ROUND_ACTIVE:
             if key == arcade.key.LEFT or key == arcade.key.A:
                 self.cursor_position -= 1
@@ -119,6 +183,7 @@ class MyGame(arcade.Window):
 
             else:
                 pass
+
             if key == arcade.key.ENTER:
                 if self.cursor_position == 1:
                     self.player_choice = AttackType.ROCK
