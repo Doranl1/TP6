@@ -9,7 +9,7 @@ class MyGame(arcade.Window):
     def __init__(self):
         self.window_width = 800
         self.window_height = 600
-        super().__init__(self.window_width, self.window_height, f"Jeu de Game")
+        super().__init__(self.window_width, self.window_height, f"Roche, Papier, Ciseaux")
         self.player_choice = None
         self.player_point = 0
         self.bot_choice = None
